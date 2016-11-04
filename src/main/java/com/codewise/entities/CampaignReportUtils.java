@@ -5,25 +5,22 @@ import org.json.JSONObject;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Created by kchachlo on 2016-11-02.
- */
+import static com.codewise.entities.CampaignReportValue.CONVERSIONS;
+import static com.codewise.entities.CampaignReportValue.VISITS;
+
+
 public class CampaignReportUtils
 {
-    public static void main(String... args){
-        campaignRecordRequestUrl();
-    }
-    public static String  campaignRecordRequestUrl(){
+
+    public static String  campaignRecordRequestUrl(String campaignId){
         //todo: remove hack
         String reportURL = "https://portal.voluum.com/report";
-        String campaignId = "c9450b92-b7d1-4131-917c-6cc237149eaf";
 
         LocalDateTime localDateTime = LocalDate.now().atStartOfDay();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME;
-        String dateFrom = localDateTime.format(dateTimeFormatter)+"Z";
+        String dateFrom = localDateTime.withDayOfMonth(3).withMonth(11).format(dateTimeFormatter)+"Z";
         String dateTo = localDateTime.plusDays(1).format(dateTimeFormatter)+"Z";
 
 
@@ -35,14 +32,16 @@ public class CampaignReportUtils
     }
 
     public static int getNumberOfVisitsFromResponse(String response){
-        JSONObject json = new JSONObject(response);
-        int visitsNumber =json.getJSONArray("rows").getJSONObject(0).getInt("visits");
-        return visitsNumber;
+        return getIntValueFromCampaignReportJSON(VISITS, response);
     }
 
     public static int getNumberOfConversionsFromResponse(String response){
+        return getIntValueFromCampaignReportJSON(CONVERSIONS, response);
+    }
+
+    public static int getIntValueFromCampaignReportJSON(CampaignReportValue campaignReportValue, String response){
         JSONObject json = new JSONObject(response);
-        int visitsNumber =json.getJSONArray("rows").getJSONObject(0).getInt("conversions");
-        return visitsNumber;
+        int valueForKey = json.getJSONArray("rows").getJSONObject(0).getInt(campaignReportValue.getKeyName());
+        return valueForKey;
     }
 }

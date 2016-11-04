@@ -1,69 +1,89 @@
 package scenarios;
 
 import com.codewise.entities.Campaign;
+import com.codewise.entities.CampaignReportValue;
 import com.codewise.exceptions.InvalidResponseCodeException;
+import com.codewise.voluum.ApplicationProperties;
 import com.codewise.voluum.RestfulClient;
 import com.sun.deploy.util.StringUtils;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+
+import static com.codewise.entities.CampaignReportValue.*;
 
 /**
  * Created by kchachlo on 2016-11-02.
  */
 public class Scenario1
 {
-    private static final String username = "sdit.recruit1@codewise.com";
-    private static final String password = "WNZL5#Q-?ntr";
+    private static final String username = "sdit.recruit2@codewise.com";
+    private static final String password = "r8uJ4@5qQpC%";
 
-    @Before
-    public void setUp(){
+    @BeforeClass
+    public static void setUp(){
 
     }
     @Test
     public void newCampaignRedirectsToValidURL_E2E() throws IOException, InvalidResponseCodeException, Exception{
         String token = RestfulClient.authenticate(username, password);
-         Campaign campaign = RestfulClient.createCampaign(token);
+        Campaign campaign = RestfulClient.createCampaign(token);
 
-       String location =RestfulClient.visitCampaignURL("http://rskxz.voluumtrk.com/voluum/6d2a1cfc-3381-4f71-ba5b-73a2da713fec");
-         location = "http://example.com/w3CD9A5LEVF5VCR0HST8EM8O";
+        String location = RestfulClient.visitCampaignURL(campaign.getUrl(), false);
 
         String [] split = StringUtils.splitString(location,"/");
-        String randomId = split[split.length-1];
-        Assert.assertEquals("Invalid length of random id", 24, randomId.length());
-        Assert.assertTrue("Non-letter characters in location random id", randomId.matches("[a-zA-Z0-9]+"));
+        String locationRandomId = split[split.length-1];
+        String locationPrefix = StringUtils.splitString(location, locationRandomId)[0];
+        Assert.assertEquals("Invalid length of random id", 24, locationRandomId.length());
 
-      //  Assert.assertEquals("Location in response header is different than expected", campaign.getDirectRedirectUrl(), location);
+        Assert.assertTrue("Non-letter characters in location random id", locationRandomId.matches("[a-zA-Z0-9]+"));
+        Assert.assertTrue("Location prefix is different than expected", campaign.getDirectRedirectUrl().startsWith(locationPrefix));
     }
 
     @Test
-    public void scenario2() throws IOException, URISyntaxException, InterruptedException
+    public void visitsToCampaignIncreaseVisitsByOne_E2E() throws IOException, URISyntaxException, InterruptedException
     {
         String token = RestfulClient.authenticate(username, password);
-        Campaign campaign = RestfulClient.createCampaign(token);
-        int initialNumberOfVisits =RestfulClient.getNumberOfVisits(campaign.getId(), token);
+        String existingCampaignId = "1d6b4915-1633-4be7-ba14-d54f7c559de3";
 
-        RestfulClient.visitCampaignURL(campaign.getUrl());
+        Campaign campaign = RestfulClient.getCampaign(token, existingCampaignId);
+        int initialNumberOfVisits =RestfulClient.getNumberOfVisits( campaign.getId(), token);
+
+        RestfulClient.visitCampaignURL(campaign.getUrl(), true);
         Thread.sleep(10000);
-        int finalNumberOfVisits = RestfulClient.getNumberOfVisits(campaign.getId(), token);
+        int finalNumberOfVisits = RestfulClient.getNumberOfVisits( campaign.getId(), token);
 
         Assert.assertEquals("Number of visits was not increased by 1", initialNumberOfVisits+1, finalNumberOfVisits);
 
     }
 
     @Test
-    public void scenario3(){
-        // postback
-       // http://rskxz.voluumtrk.com/postback?cid=REPLACE&payout=OPTIONAL&txid=OPTIONAL
+    public void requestToPostbackIncreasesConversionsByOne() throws IOException, URISyntaxException, InterruptedException
+    {
 
-        //secure postback
-        //https://rskxz.voluumtrk.com/postback?cid=REPLACE&payout=OPTIONAL&txid=OPTIONAL
+        String token = RestfulClient.authenticate(username, password);
+        String existingCampaignId = "1d6b4915-1633-4be7-ba14-d54f7c559de3";
 
-      //  http://example.com/w3CD9A5LEVF5VCR0HST8EM8O
-        //http://rskxz.voluumtrk.com/postback?cid=w65Q83U5MEAOCDR0HLF2B290
+        Campaign campaign = RestfulClient.getCampaign(token, existingCampaignId);
+     int initialNumberOfConversions =RestfulClient.getNumberOfConversions(campaign.getId(), token);
+
+        String location = RestfulClient.visitCampaignURL(campaign.getUrl(), false);
+        String [] split = StringUtils.splitString(location,"/");
+        String locationRandomId = split[split.length-1];
+
+        String postbackAddress = "http://auayi.voluumtrk.com/voluum/postback?cid=" +locationRandomId;
+
+        RestfulClient.performPostback(locationRandomId, token);
+        Thread.sleep(30000);
+
+        int finalNumberOfConversions = RestfulClient.getNumberOfConversions(existingCampaignId, token);
+
+        Assert.assertEquals("Number of conversions was not increased by 1", initialNumberOfConversions+1, finalNumberOfConversions);
+
 
     }
 }
