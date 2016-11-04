@@ -1,8 +1,5 @@
 package com.codewise.voluum;
 
-/**
- * Created by kchachlo on 2016-11-04.
- */
 public class AppProperties
 {
     public final static String USERNAME = "sdit.recruit2@codewise.com";

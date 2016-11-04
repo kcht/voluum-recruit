@@ -1,15 +1,12 @@
 package com.codewise.entities;
 
-/**
- * Created by kchachlo on 2016-11-04.
- */
-public enum CampaignReportValue
+public enum CampaignReportReponseField
 {
     VISITS("visits"), CONVERSIONS("conversions");
 
     String keyName;
 
-    CampaignReportValue(String keyName){
+    CampaignReportReponseField(String keyName){
         this.keyName = keyName;
     }
 

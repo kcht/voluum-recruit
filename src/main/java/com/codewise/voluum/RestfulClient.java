@@ -19,7 +19,8 @@ public class RestfulClient
         return httpConnection;
     }
 
-    protected static HttpURLConnection prepareRequest(String url, RESTMethod method, Map<String, String> headers, String payload) throws IOException
+    protected static HttpURLConnection prepareRequest(String url, RESTMethod method, Map<String, String> headers, String payload)
+        throws IOException
     {
         URL restServiceURL = new URL(url);
         HttpURLConnection httpConnection = (HttpURLConnection) restServiceURL.openConnection();
@@ -32,11 +33,8 @@ public class RestfulClient
             PrintWriter pw = new PrintWriter(new OutputStreamWriter(os));
             pw.write(payload);
             pw.close();
-
         }
-
         return httpConnection;
-
     }
 
     public static String getResponseFromConnection(HttpURLConnection httpConnection) throws IOException {
@@ -52,10 +50,15 @@ public class RestfulClient
         return sb.toString();
     }
 
-    public static void validateResponseCode(HttpURLConnection httpConnection, int expectedResponseCode) throws IOException, InvalidResponseCodeException{
+    public static void validateResponseCode(HttpURLConnection httpConnection, int expectedResponseCode)
+        throws IOException, InvalidResponseCodeException
+    {
         int actualResponseCode = httpConnection.getResponseCode();
         if(expectedResponseCode != actualResponseCode){
-            throw new InvalidResponseCodeException(actualResponseCode, actualResponseCode + ": " + httpConnection.getResponseMessage());
+            throw new InvalidResponseCodeException(
+                actualResponseCode,
+                actualResponseCode + ": " + httpConnection.getResponseMessage()
+            );
         }
         else{
             logger.info("Got expected response code: " + expectedResponseCode);

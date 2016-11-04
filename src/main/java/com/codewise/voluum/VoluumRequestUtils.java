@@ -1,37 +1,41 @@
 package com.codewise.voluum;
 
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
 public class VoluumRequestUtils
 {
-    private static String generateRandomName(int length){
+    private static String generateRandomName(int length)
+    {
         String candidateChars = "0123456789";
         StringBuilder sb = new StringBuilder();
         Random random = new Random();
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < length; i++)
+        {
             sb.append(candidateChars.charAt(random.nextInt(candidateChars.length())));
         }
 
         return sb.toString();
     }
 
-    public static Map<String, String> addBasicHeaders(){
+    public static Map<String, String> addBasicHeaders()
+    {
         Map<String, String> headers = new HashMap<>();
         headers.put("Accept", "application/json");
         headers.put("Content-Type", "application/json");
         return headers;
     }
 
-    public static Map<String, String> addBasicHeadersWithToken(String token){
+    public static Map<String, String> addBasicHeadersWithToken(String token)
+    {
         Map<String, String> headers = addBasicHeaders();
         headers.put("cwauth-token", token);
         return headers;
     }
 
-    public static String getPayloadForCreateCampaignWithRandomName(){
+    public static String getPayloadForCreateCampaignWithRandomName()
+    {
         String campaignName = VoluumRequestUtils.generateRandomName(10);
         return "{"
             + "\"namePostfix\":" + campaignName + ","

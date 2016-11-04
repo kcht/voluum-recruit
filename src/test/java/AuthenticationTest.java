@@ -12,7 +12,7 @@ import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 
-public class RestfulClientTest
+public class AuthenticationTest
 {
     private static final String invalidUsername = "INVALID";
     private static final String invalidPassword = "INVALID";
