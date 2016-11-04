@@ -3,14 +3,14 @@ package com.codewise.voluum;
 import com.codewise.entities.Campaign;
 import com.codewise.entities.CampaignReportUtils;
 import com.codewise.exceptions.InvalidResponseCodeException;
-import org.apache.log4j.Appender;
 import org.apache.log4j.Logger;
-import org.json.HTTP;
 import org.json.JSONObject;
 
 import java.io.*;
 import java.net.*;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RestfulClient
 {
@@ -18,38 +18,69 @@ public class RestfulClient
 
 
     private static final String authenticationServiceURL = "http://security.voluum.com/login";
-    private static final String username = "sdit.recruit1@codewise.com";
-    private static final String password = "";
 
 
-    public static void setRequestHeaders(HttpURLConnection httpConnection){
-        httpConnection.setRequestProperty("Accept", "application/json");
+
+    private static HttpURLConnection setRequestHeaders(HttpURLConnection httpConnection, Map<String, String> headers){
+        for(Map.Entry<String, String> header: headers.entrySet())
+        {
+            httpConnection.setRequestProperty(header.getKey(),  header.getValue());
+        }
+        return httpConnection;
+    }
+
+    private static HttpURLConnection prepareRequest(String url, RESTMethod method, Map<String, String> headers, String payload) throws IOException
+    {
+        URL restServiceURL = new URL(url);
+        HttpURLConnection httpConnection = (HttpURLConnection) restServiceURL.openConnection();
+        httpConnection.setRequestMethod(method.toString());
+        setRequestHeaders(httpConnection, headers);
+
+        if(payload != null){
+            httpConnection.setDoOutput(true);
+            OutputStream os = httpConnection.getOutputStream();
+            PrintWriter pw = new PrintWriter(new OutputStreamWriter(os));
+            pw.write(payload);
+            pw.close();
+
+        }
+
+        return httpConnection;
 
     }
 
-    public static String getPropertyFromJSON(String payload, String property){
-        JSONObject jsonObject = new JSONObject(payload);
-        return jsonObject.getString(property);
+    private static Map<String, String> addBasicHeaders(){
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Accept", "application/json");
+        headers.put("Content-Type", "application/json");
+        return headers;
     }
+
+    private static Map<String, String> addBasicHeadersWithToken(String token){
+        Map<String, String> headers = addBasicHeaders();
+        headers.put("cwauth-token", token);
+        return headers;
+    }
+
     public static String authenticate(String username, String password) throws IOException, InvalidResponseCodeException
     {
-        URL restServiceURL = new URL(authenticationServiceURL);
 
-        HttpURLConnection httpConnection = (HttpURLConnection) restServiceURL.openConnection();
-        httpConnection.setRequestMethod("GET");
-
-        setRequestHeaders(httpConnection);
         String authString = username + ":" + password;
         String authStringEnc = new String(Base64.getEncoder().encode(authString.getBytes()));
         System.out.println(authStringEnc);
         System.out.println(new String(Base64.getDecoder().decode(authStringEnc)));
-        httpConnection.setRequestProperty("Authorization", "Basic " + authStringEnc);
+
+        Map<String, String> headers = addBasicHeaders();
+        headers.put("Authorization", "Basic " + authStringEnc);
+
+        HttpURLConnection httpConnection = prepareRequest(authenticationServiceURL, RESTMethod.GET, headers, null);
+
 
         validateResponseCode(httpConnection, HttpURLConnection.HTTP_OK);
         String responseJSON = getResponseFromConnection(httpConnection);
         httpConnection.disconnect();
 
-        return getPropertyFromJSON(responseJSON, "token");
+        return JSONUtils.getPropertyFromJSON(responseJSON, "token");
 
     }
 
@@ -67,12 +98,9 @@ public class RestfulClient
 
     private static String getReportJSONForCampaign(String campaignId, String cwauthToken) throws  IOException{
         String url = CampaignReportUtils.campaignRecordRequestUrl(campaignId);
-        URL restServiceURL = new URL(url);
-        HttpURLConnection httpConnection = (HttpURLConnection) restServiceURL.openConnection();
-        httpConnection.setRequestMethod("GET");
-        httpConnection.setRequestProperty("Accept", "application/json");
-        httpConnection.setRequestProperty("Content-Type", "application/json");
-        httpConnection.setRequestProperty("cwauth-token", cwauthToken);
+
+        HttpURLConnection httpConnection = prepareRequest(url, RESTMethod.GET, addBasicHeadersWithToken(cwauthToken), null);
+
         validateResponseCode(httpConnection, HttpURLConnection.HTTP_OK);
         String responseJSON = getResponseFromConnection(httpConnection);
         httpConnection.disconnect();
@@ -80,14 +108,7 @@ public class RestfulClient
     }
 
 
-    public static void main(String... s) throws Exception
-    {
-        ApplicationProperties applicationProperties = new ApplicationProperties();
-        applicationProperties.loadProperties();
-        System.out.println(applicationProperties.getUsername());
 
-        // createCampaign();
-    }
 
     public static String getResponseFromConnection(HttpURLConnection httpConnection) throws IOException {
         BufferedReader responseBuffer = new BufferedReader(new InputStreamReader(httpConnection.getInputStream()));
@@ -117,28 +138,15 @@ public class RestfulClient
         String postbackAddress = "http://auayi.voluumtrk.com/postback?cid=" +locationRandomId;
 
         System.out.println(postbackAddress);
-        URL restServiceURL = new URL(postbackAddress);
+        HttpURLConnection httpConnection = prepareRequest(postbackAddress, RESTMethod.GET, addBasicHeadersWithToken(cwauthToken), null);
 
-        HttpURLConnection httpConnection = (HttpURLConnection) restServiceURL.openConnection();
-        httpConnection.setRequestMethod("GET");
-        httpConnection.setRequestProperty("Accept", "application/json");
-        httpConnection.setRequestProperty("Content-Type", "application/json");
-        httpConnection.setRequestProperty("cwauth-token", cwauthToken);
-
-
-            validateResponseCode(httpConnection, HttpURLConnection.HTTP_OK);
-
+        validateResponseCode(httpConnection, HttpURLConnection.HTTP_OK);
         httpConnection.disconnect();
     }
     public static String visitCampaignURL(String campaignURL, boolean redirectMode) throws IOException, URISyntaxException
     {
-
-        URL restServiceURL = new URL(campaignURL);
-
-        HttpURLConnection httpConnection = (HttpURLConnection) restServiceURL.openConnection();
-        httpConnection.setRequestMethod("POST"); //despite specification when performing request for GET it gives 404 not found.
-        httpConnection.setRequestProperty("Accept", "application/json");
-        httpConnection.setRequestProperty("Content-Type", "application/json");
+        HttpURLConnection httpConnection = prepareRequest(campaignURL, RESTMethod.POST, addBasicHeaders(), null);
+        //despite specification when performing request for GET it gives 404 not found.
 
         httpConnection.setInstanceFollowRedirects(redirectMode);
         if(redirectMode){
@@ -149,22 +157,14 @@ public class RestfulClient
         }
 
         String location = httpConnection.getHeaderField("Location");
-
         httpConnection.disconnect();
         return location;
     }
 
     public static Campaign getCampaign(String cwauthToken, String campaignId) throws IOException
     {
-        String host = "https://core.voluum.com/campaigns/" + campaignId;
-        URL restServiceURL = new URL(host);
-
-        HttpURLConnection httpConnection = (HttpURLConnection) restServiceURL.openConnection();
-        httpConnection.setRequestMethod("GET");
-        httpConnection.setRequestProperty("Accept", "application/json");
-        httpConnection.setRequestProperty("Content-Type", "application/json");
-        httpConnection.setRequestProperty("cwauth-token", cwauthToken);
-        httpConnection.setDoOutput(true);
+        String url = "https://core.voluum.com/campaigns/" + campaignId;
+        HttpURLConnection httpConnection = prepareRequest(url, RESTMethod.GET, addBasicHeadersWithToken(cwauthToken), null);
 
         validateResponseCode(httpConnection, HttpURLConnection.HTTP_OK);
         String responsePayload = getResponseFromConnection(httpConnection);
@@ -204,21 +204,7 @@ public class RestfulClient
                 + "\"directRedirectUrl\":\"http://example.com/{clickid}\"}";
         String host = "https://core.voluum.com/campaigns";
 
-        System.out.println(requestPayload);
-
-        URL restServiceURL = new URL(host);
-
-        HttpURLConnection httpConnection = (HttpURLConnection) restServiceURL.openConnection();
-        httpConnection.setRequestMethod("POST");
-        httpConnection.setRequestProperty("Accept", "application/json");
-        httpConnection.setRequestProperty("Content-Type", "application/json");
-        httpConnection.setRequestProperty("cwauth-token", cwauthToken);
-        httpConnection.setDoOutput(true);
-
-        OutputStream os = httpConnection.getOutputStream();
-        PrintWriter pw = new PrintWriter(new OutputStreamWriter(os));
-        pw.write(requestPayload);
-        pw.close();
+        HttpURLConnection httpConnection = prepareRequest(host, RESTMethod.POST, addBasicHeadersWithToken(cwauthToken), requestPayload);
 
         validateResponseCode(httpConnection, HttpURLConnection.HTTP_CREATED);
         String responsePayload = getResponseFromConnection(httpConnection);
