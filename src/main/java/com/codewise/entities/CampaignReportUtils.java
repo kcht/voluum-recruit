@@ -1,6 +1,6 @@
 package com.codewise.entities;
 
-import com.codewise.voluum.AppProperties;
+import com.codewise.App;
 import org.json.JSONObject;
 
 import java.time.LocalDate;
@@ -16,7 +16,7 @@ public class CampaignReportUtils
 
     public static String campaignRecordRequestUrl(String campaignId)
     {
-        String reportURL = AppProperties.REPORT_SERVICE_URL;
+        String reportURL = App.reportServiceUrl;
 
         LocalDateTime localDateTime = LocalDate.now().atStartOfDay();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME;

@@ -1,5 +1,6 @@
 package com.codewise.voluum;
 
+import com.codewise.App;
 import com.codewise.entities.Campaign;
 import com.codewise.entities.CampaignReportUtils;
 import com.codewise.exceptions.InvalidResponseCodeException;
@@ -10,8 +11,6 @@ import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.util.Base64;
 import java.util.Map;
-
-import static com.codewise.voluum.AppProperties.*;
 
 public class VoluumClient extends RestfulClient
 {
@@ -24,7 +23,7 @@ public class VoluumClient extends RestfulClient
 
         Map<String, String> headers = VoluumRequestUtils.addBasicHeaders();
         headers.put("Authorization", "Basic " + authStringEnc);
-        HttpURLConnection httpConnection = prepareRequest(AUTH_SERVICE_URL, RESTMethod.GET, headers, null);
+        HttpURLConnection httpConnection = prepareRequest(App.authServiceUrl, RESTMethod.GET, headers, null);
 
         validateResponseCode(httpConnection, HttpURLConnection.HTTP_OK);
         String responseJSON = getResponseFromConnection(httpConnection);
@@ -63,7 +62,7 @@ public class VoluumClient extends RestfulClient
 
     public static void performPostback(String locationRandomId, String cwauthToken) throws IOException
     {
-        String postbackAddress = AppProperties.POSTBACK_URL_PREFIX + locationRandomId;
+        String postbackAddress = App.postBackUrlPrefix + locationRandomId;
 
         System.out.println(postbackAddress);
         HttpURLConnection httpConnection = prepareRequest(
@@ -102,7 +101,7 @@ public class VoluumClient extends RestfulClient
 
     public static Campaign getCampaign(String cwauthToken, String campaignId) throws IOException
     {
-        String campaignGetUrl = AppProperties.CORE_SERVICE_URL + "/campaigns/" + campaignId;
+        String campaignGetUrl = App.coreServiceUrl + "/campaigns/" + campaignId;
         HttpURLConnection httpConnection = prepareRequest(
             campaignGetUrl,
             RESTMethod.GET,
@@ -128,7 +127,7 @@ public class VoluumClient extends RestfulClient
     {
         String requestPayload = VoluumRequestUtils.getPayloadForCreateCampaignWithRandomName();
 
-        String requestURL = AppProperties.CORE_SERVICE_URL + "/campaigns";
+        String requestURL = App.coreServiceUrl + "/campaigns";
 
         HttpURLConnection httpConnection = prepareRequest(
             requestURL,

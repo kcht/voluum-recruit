@@ -1,11 +1,10 @@
+import com.codewise.App;
 import com.codewise.exceptions.InvalidResponseCodeException;
-import com.codewise.voluum.AppProperties;
-import com.codewise.voluum.ApplicationProperties;
-import com.codewise.voluum.RestfulClient;
 
 import com.codewise.voluum.VoluumClient;
 import matchers.matchers.InvalidResponseErrorCodeMatcher;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -22,9 +21,13 @@ public class AuthenticationTest
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+    @BeforeClass
+    public static void setup(){
+        App.init();
+    }
     @Test
     public void authenticateSuccessfully() throws InvalidResponseCodeException, IOException {
-        String token = voluumClient.authenticate(AppProperties.USERNAME, AppProperties.PASSWORD);
+        String token = voluumClient.authenticate(App.username, App.password);
         Assert.assertEquals(token.length(), 32);
     }
 

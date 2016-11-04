@@ -1,10 +1,11 @@
 package scenarios;
 
+import com.codewise.App;
 import com.codewise.entities.Campaign;
-import com.codewise.voluum.AppProperties;
 import com.codewise.voluum.VoluumClient;
 import com.sun.deploy.util.StringUtils;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 
@@ -12,10 +13,15 @@ public class Scenario1
 {
     VoluumClient voluumClient = new VoluumClient();
 
+    @BeforeClass
+    public static void setup(){
+        App.init();
+
+    }
     @Test
     public void newCampaignRedirectsToValidURL_E2E() throws Exception
     {
-        String token = voluumClient.authenticate(AppProperties.USERNAME, AppProperties.PASSWORD);
+        String token = voluumClient.authenticate(App.username, App.password);
         Campaign campaign = voluumClient.createCampaign(token);
 
         String location = voluumClient.visitCampaignURL(campaign.getUrl(), false);
