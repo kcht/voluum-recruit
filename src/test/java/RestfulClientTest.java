@@ -1,6 +1,9 @@
 import com.codewise.exceptions.InvalidResponseCodeException;
+import com.codewise.voluum.AppProperties;
+import com.codewise.voluum.ApplicationProperties;
 import com.codewise.voluum.RestfulClient;
 
+import com.codewise.voluum.VoluumClient;
 import matchers.matchers.InvalidResponseErrorCodeMatcher;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -11,18 +14,17 @@ import java.io.IOException;
 
 public class RestfulClientTest
 {
-    private static final String username = "sdit.recruit1@codewise.com";
-    private static final String password = "";
-
     private static final String invalidUsername = "INVALID";
     private static final String invalidPassword = "INVALID";
+
+    VoluumClient voluumClient = new VoluumClient();
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void authenticateSuccessfully() throws InvalidResponseCodeException, IOException {
-        String token = RestfulClient.authenticate(username, password);
+        String token = voluumClient.authenticate(AppProperties.USERNAME, AppProperties.PASSWORD);
         Assert.assertEquals(token.length(), 32);
     }
 
@@ -31,6 +33,6 @@ public class RestfulClientTest
         expectedException.expect(InvalidResponseCodeException.class);
         expectedException.expect(InvalidResponseErrorCodeMatcher.hasResponseCode(401));
 
-        RestfulClient.authenticate(invalidUsername, invalidPassword);
+        voluumClient.authenticate(invalidUsername, invalidPassword);
     }
 }

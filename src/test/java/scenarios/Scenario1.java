@@ -3,8 +3,11 @@ package scenarios;
 import com.codewise.entities.Campaign;
 import com.codewise.entities.CampaignReportValue;
 import com.codewise.exceptions.InvalidResponseCodeException;
+import com.codewise.voluum.AppProperties;
 import com.codewise.voluum.ApplicationProperties;
 import com.codewise.voluum.RestfulClient;
+import com.codewise.voluum.VoluumClient;
+import com.sun.beans.decoder.ValueObject;
 import com.sun.deploy.util.StringUtils;
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,19 +24,20 @@ import static com.codewise.entities.CampaignReportValue.*;
  */
 public class Scenario1
 {
-    private static final String username = "sdit.recruit2@codewise.com";
-    private static final String password = "r8uJ4@5qQpC%";
+//    private static final String username = "sdit.recruit2@codewise.com";
+//    private static final String password = "r8uJ4@5qQpC%";
+
+    VoluumClient voluumClient = new VoluumClient();
 
     @BeforeClass
     public static void setUp(){
-
     }
     @Test
     public void newCampaignRedirectsToValidURL_E2E() throws IOException, InvalidResponseCodeException, Exception{
-        String token = RestfulClient.authenticate(username, password);
-        Campaign campaign = RestfulClient.createCampaign(token);
+        String token = voluumClient.authenticate(AppProperties.USERNAME, AppProperties.PASSWORD);
+        Campaign campaign = voluumClient.createCampaign(token);
 
-        String location = RestfulClient.visitCampaignURL(campaign.getUrl(), false);
+        String location = voluumClient.visitCampaignURL(campaign.getUrl(), false);
 
         String [] split = StringUtils.splitString(location,"/");
         String locationRandomId = split[split.length-1];
@@ -47,15 +51,15 @@ public class Scenario1
     @Test
     public void visitsToCampaignIncreaseVisitsByOne_E2E() throws IOException, URISyntaxException, InterruptedException
     {
-        String token = RestfulClient.authenticate(username, password);
+        String token = voluumClient.authenticate(AppProperties.USERNAME, AppProperties.PASSWORD);
         String existingCampaignId = "1d6b4915-1633-4be7-ba14-d54f7c559de3";
 
-        Campaign campaign = RestfulClient.getCampaign(token, existingCampaignId);
-        int initialNumberOfVisits =RestfulClient.getNumberOfVisits( campaign.getId(), token);
+        Campaign campaign = voluumClient.getCampaign(token, existingCampaignId);
+        int initialNumberOfVisits =voluumClient.getNumberOfVisits( campaign.getId(), token);
 
-        RestfulClient.visitCampaignURL(campaign.getUrl(), true);
+        voluumClient.visitCampaignURL(campaign.getUrl(), true);
         Thread.sleep(10000);
-        int finalNumberOfVisits = RestfulClient.getNumberOfVisits( campaign.getId(), token);
+        int finalNumberOfVisits = voluumClient.getNumberOfVisits( campaign.getId(), token);
 
         Assert.assertEquals("Number of visits was not increased by 1", initialNumberOfVisits+1, finalNumberOfVisits);
 
@@ -65,20 +69,20 @@ public class Scenario1
     public void requestToPostbackIncreasesConversionsByOne() throws IOException, URISyntaxException, InterruptedException
     {
 
-        String token = RestfulClient.authenticate(username, password);
+        String token = voluumClient.authenticate(AppProperties.USERNAME, AppProperties.PASSWORD);
         String existingCampaignId = "1d6b4915-1633-4be7-ba14-d54f7c559de3";
 
-        Campaign campaign = RestfulClient.getCampaign(token, existingCampaignId);
-     int initialNumberOfConversions =RestfulClient.getNumberOfConversions(campaign.getId(), token);
+        Campaign campaign = voluumClient.getCampaign(token, existingCampaignId);
+     int initialNumberOfConversions =voluumClient.getNumberOfConversions(campaign.getId(), token);
 
-        String location = RestfulClient.visitCampaignURL(campaign.getUrl(), false);
+        String location = voluumClient.visitCampaignURL(campaign.getUrl(), false);
         String [] split = StringUtils.splitString(location,"/");
         String locationRandomId = split[split.length-1];
 
-        RestfulClient.performPostback(locationRandomId, token);
+        voluumClient.performPostback(locationRandomId, token);
         Thread.sleep(30000);
 
-        int finalNumberOfConversions = RestfulClient.getNumberOfConversions(existingCampaignId, token);
+        int finalNumberOfConversions = voluumClient.getNumberOfConversions(existingCampaignId, token);
 
         Assert.assertEquals("Number of conversions was not increased by 1", initialNumberOfConversions+1, finalNumberOfConversions);
 
