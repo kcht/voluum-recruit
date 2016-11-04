@@ -16,10 +16,7 @@ public class RestfulClient
 {
     private final static Logger logger = Logger.getLogger(RestfulClient.class.getName());
 
-
     private static final String authenticationServiceURL = "http://security.voluum.com/login";
-
-
 
     private static HttpURLConnection setRequestHeaders(HttpURLConnection httpConnection, Map<String, String> headers){
         for(Map.Entry<String, String> header: headers.entrySet())
@@ -72,8 +69,7 @@ public class RestfulClient
 
         Map<String, String> headers = addBasicHeaders();
         headers.put("Authorization", "Basic " + authStringEnc);
-
-        HttpURLConnection httpConnection = prepareRequest(authenticationServiceURL, RESTMethod.GET, headers, null);
+        HttpURLConnection httpConnection = prepareRequest(AppProperties.AUTH_SERVICE_URL, RESTMethod.GET, headers, null);
 
 
         validateResponseCode(httpConnection, HttpURLConnection.HTTP_OK);
@@ -135,7 +131,7 @@ public class RestfulClient
 
     public static void performPostback(String locationRandomId, String cwauthToken) throws IOException
     {
-        String postbackAddress = "http://auayi.voluumtrk.com/postback?cid=" +locationRandomId;
+        String postbackAddress = AppProperties.POSTBACK_URL_PREFIX +locationRandomId;
 
         System.out.println(postbackAddress);
         HttpURLConnection httpConnection = prepareRequest(postbackAddress, RESTMethod.GET, addBasicHeadersWithToken(cwauthToken), null);
@@ -163,7 +159,7 @@ public class RestfulClient
 
     public static Campaign getCampaign(String cwauthToken, String campaignId) throws IOException
     {
-        String url = "https://core.voluum.com/campaigns/" + campaignId;
+        String url = AppProperties.CORE_SERVICE_URL +"/campaigns/" + campaignId;
         HttpURLConnection httpConnection = prepareRequest(url, RESTMethod.GET, addBasicHeadersWithToken(cwauthToken), null);
 
         validateResponseCode(httpConnection, HttpURLConnection.HTTP_OK);
@@ -182,8 +178,6 @@ public class RestfulClient
     }
     public static Campaign createCampaign(String cwauthToken) throws IOException, InvalidResponseCodeException
     {
-        //todo move payload to request Utils, url as parameter
-        //campaign name
 
         String campaignName = VoluumRequestUtils.generateRandomName(10);
         String requestPayload = "{"
@@ -202,9 +196,10 @@ public class RestfulClient
                 + "\"rootRedirect\":false},"
                 + "\"costModelHidden\":true,"
                 + "\"directRedirectUrl\":\"http://example.com/{clickid}\"}";
-        String host = "https://core.voluum.com/campaigns";
 
-        HttpURLConnection httpConnection = prepareRequest(host, RESTMethod.POST, addBasicHeadersWithToken(cwauthToken), requestPayload);
+        String requestURL = AppProperties.CORE_SERVICE_URL + "/campaigns";
+
+        HttpURLConnection httpConnection = prepareRequest(requestURL, RESTMethod.POST, addBasicHeadersWithToken(cwauthToken), requestPayload);
 
         validateResponseCode(httpConnection, HttpURLConnection.HTTP_CREATED);
         String responsePayload = getResponseFromConnection(httpConnection);

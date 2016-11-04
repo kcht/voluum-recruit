@@ -74,7 +74,7 @@ public class Scenario1
         String location = RestfulClient.visitCampaignURL(campaign.getUrl(), false);
         String [] split = StringUtils.splitString(location,"/");
         String locationRandomId = split[split.length-1];
-        
+
         RestfulClient.performPostback(locationRandomId, token);
         Thread.sleep(30000);
 
